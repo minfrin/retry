@@ -22,7 +22,7 @@ AC_TYPE_UINT32_T
 
 # Checks for library functions.
 AC_FUNC_MALLOC
-AC_CHECK_FUNCS([clock_gettime])
+AC_CHECK_FUNCS([getopt])
 
 AC_OUTPUT
 
