@@ -1,0 +1,5 @@
+repeat (1.0.0) stable; urgency=low
+
+  * Initial Release.
+
+ -- Graham Leggett <minfrin@sharp.fm>  Mon, 6 Jan 2020 00:00:00 +0000

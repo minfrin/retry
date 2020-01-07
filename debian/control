@@ -1,0 +1,14 @@
+Source: repeat
+Priority: extra
+Maintainer: Graham Leggett <minfrin@sharp.fm>
+Build-Depends: debhelper (>= 8.0.0), autotools-dev
+Standards-Version: 3.9.4
+Section: utils
+Homepage: https://github.com/minfrin/repeat
+
+Package: repeat
+Section: utils
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Repeat a command until the command succeeds.
+
