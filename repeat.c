@@ -25,10 +25,25 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sysexits.h>
+#include <poll.h>
+#include <sys/uio.h>
 
 #include "config.h"
 
 #define DEFAULT_DELAY 10
+
+#define STDIN_FD 0
+#define STDOUT_FD 1
+#define STDERR_FD 2
+
+#define READ_FD 0
+#define WRITE_FD 1
+
+#define OFFSET(X, Y)  (X * 2 + Y)
+
+#define PUMPS 2
+
+#define BUFFER_SIZE (100 * 1024)
 
 static struct option long_options[] =
 {
@@ -41,6 +56,15 @@ static struct option long_options[] =
     {NULL, 0, NULL, 0}
 };
 
+typedef struct pump_t {
+    void *base;
+    size_t len;
+    off_t offset;
+    int read_closed:1;
+    int write_closed:1;
+    int exit_on_close:1;
+} pump_t;
+
 static int help(const char *name, const char *msg, int code)
 {
     fprintf(code ? stderr : stdout,
@@ -48,6 +72,16 @@ static int help(const char *name, const char *msg, int code)
             "\n"
             "The tool repeats the given command until the command is successful,"
             "backing off with a configurable delay between each attempt.\n"
+            "\n"
+            "Repeat captures stdin into memory as the data is passed to the repeated\n"
+            "command, and this captured stdin is then replayed should the command\n"
+            "be repeated. This makes it possible to embed the repeat tool into shell\n"
+            "pipelines.\n"
+            "\n"
+            "Repeat captures stdout into memory, and if the command was successful\n"
+            "stdout is passed on to stdout as normal, while if the command was\n"
+            "repeated stdout is passed to stderr instead. This ensures that output\n"
+            "is passed to stdout once and once only."
             "\n"
             "  -d seconds, --delay=seconds\tThe number of seconds to back off\n"
             "\t\t\t\tafter each attempt.\n"
@@ -78,6 +112,132 @@ static int should_repeat(int status, const char *repeat_until, const char *repea
     return status;
 }
 
+static int pump(const char *name, pump_t *pumps, struct pollfd *fds)
+{
+    nfds_t nfds = PUMPS * 2;
+    int i;
+
+    while (1) {
+        int stay = 0;
+
+        for (i = 0; i < PUMPS; i++) {
+
+            fds[OFFSET(i, READ_FD)].events = 0;
+            fds[OFFSET(i, WRITE_FD)].events = 0;
+
+            if (!pumps[i].read_closed) {
+                fds[OFFSET(i, READ_FD)].events = POLLIN;
+                stay = 1;
+            }
+
+            if (!pumps[i].write_closed && pumps[i].len > pumps[i].offset) {
+                fds[OFFSET(i, WRITE_FD)].events = POLLOUT;
+                stay = 1;
+            }
+
+            if (pumps[i].read_closed && pumps[i].exit_on_close) {
+                stay = 0;
+                break;
+            }
+
+        }
+
+        if (!stay) {
+            break;
+        }
+
+        if (poll(fds, nfds, -1) < 0) {
+
+            fprintf(stderr, "%s: Could not poll, giving up: %s\n", name,
+                    strerror(errno));
+
+            return -1;
+        }
+
+        for (i = 0; i < PUMPS; i++) {
+
+            if (fds[OFFSET(i, READ_FD)].revents & POLLIN) {
+                void *base;
+                ssize_t num;
+
+                base = realloc(pumps[i].base, pumps[i].len + BUFFER_SIZE);
+                if (!base) {
+
+                    fprintf(stderr, "%s: Out of memory, giving up.\n", name);
+
+                    return -1;
+                }
+                pumps[i].base = base;
+
+                num = read(fds[OFFSET(i, READ_FD)].fd, base + pumps[i].len, BUFFER_SIZE);
+
+                if (num < 0) {
+
+                    fprintf(stderr, "%s: Could not read, giving up: %s\n", name,
+                            strerror(errno));
+
+                    return -1;
+                }
+                else if (num == 0) {
+                    pumps[i].read_closed = 1;
+                }
+                else {
+                    pumps[i].len += num;
+                }
+
+            }
+
+            if ((fds[OFFSET(i, READ_FD)].revents & POLLHUP) ||
+                    (fds[OFFSET(i, READ_FD)].revents & POLLERR) ||
+                    (fds[OFFSET(i, READ_FD)].revents & POLLNVAL)) {
+
+                close(fds[OFFSET(i, READ_FD)].fd);
+                pumps[i].read_closed = 1;
+
+            }
+
+            if (fds[OFFSET(i, WRITE_FD)].revents & POLLOUT) {
+                ssize_t num;
+
+                num = write(fds[OFFSET(i, WRITE_FD)].fd,
+                        pumps[i].base + pumps[i].offset,
+                        pumps[i].len - pumps[i].offset);
+
+                if (num < 0) {
+
+                    fprintf(stderr, "%s: Could not write, giving up: %s\n", name,
+                            strerror(errno));
+
+                    return -1;
+                }
+                else {
+                    pumps[i].offset += num;
+                }
+
+                if (pumps[i].read_closed && pumps[i].offset == pumps[i].len) {
+
+                    close(fds[OFFSET(i, WRITE_FD)].fd);
+                    pumps[i].write_closed = 1;
+
+                }
+
+            }
+
+            if ((fds[OFFSET(i, WRITE_FD)].revents & POLLERR) ||
+                    (fds[OFFSET(i, WRITE_FD)].revents & POLLNVAL)) {
+
+                close(fds[OFFSET(i, WRITE_FD)].fd);
+                pumps[i].write_closed = 1;
+
+            }
+
+        }
+
+    }
+
+    return 0;
+}
+
 int main (int argc, char **argv)
 {
     const char *name = argv[0];
@@ -85,7 +245,8 @@ int main (int argc, char **argv)
     const char *repeat_while = NULL;
     const char *message = NULL;
     char *endptr = NULL;
-    int c, status = 0;
+    pump_t pumps[PUMPS] = { 0 };
+    int c, status = 0, i;
     long int delay = DEFAULT_DELAY;
 
     while ((c = getopt_long(argc, argv, "d:m:u:w:hv", long_options, NULL)) != -1) {
@@ -97,7 +258,7 @@ int main (int argc, char **argv)
             delay = strtol(optarg, &endptr, 10);
 
             if (errno || endptr[0] || delay < 1) {
-                return help(name, "Delay must be bigger or equal to 1.\n", 6);
+                return help(name, "Delay must be bigger or equal to 1.\n", EXIT_FAILURE);
             }
 
             break;
@@ -122,18 +283,27 @@ int main (int argc, char **argv)
             return version();
 
         default:
-            return help(name, NULL, 2);
+            return help(name, NULL, EXIT_FAILURE);
 
         }
 
     }
 
     if (optind == argc) {
-        return help(name, "No command specified.\n", 1);
+        return help(name, "No command specified.\n", EXIT_FAILURE);
     }
 
     while (1) {
         pid_t w, f;
+        int inpair[2], outpair[2];
+
+        if (pipe(inpair) || pipe(outpair)) {
+            fprintf(stderr, "%s: Could not create pipe, giving up: %s", name,
+                    strerror(errno));
+
+            status = EXIT_FAILURE;
+            break;
+        }
 
         /* Clear any inherited settings */
         signal(SIGCHLD, SIG_DFL);
@@ -145,25 +315,61 @@ int main (int argc, char **argv)
             fprintf(stderr, "%s: Could not fork, giving up: %s", name,
                     strerror(errno));
 
-            return 3;
+            status = EXIT_FAILURE;
+            break;
         }
 
         /* child */
         else if (f == 0) {
 
-            /* TODO: implement catching and recording of stdin so we only read once */
+            dup2(inpair[READ_FD], STDIN_FD);
+            close(inpair[WRITE_FD]);
+            close(outpair[READ_FD]);
+            dup2(outpair[WRITE_FD], STDOUT_FD);
 
             execvp(argv[optind], argv + optind);
 
             fprintf(stderr, "%s: Could not execute '%s', giving up: %s\n", name,
                     argv[optind], strerror(errno));
 
-            return 4;
+            status = EXIT_FAILURE;
+            break;
         }
 
         /* parent */
         else {
+            struct pollfd fds[PUMPS * 2];
 
+            /* handle stdin */
+
+            fds[OFFSET(STDIN_FD, READ_FD)].fd = STDIN_FD;
+            fds[OFFSET(STDIN_FD, WRITE_FD)].fd = inpair[WRITE_FD];
+            close(inpair[READ_FD]);
+
+            /* handle stdout */
+
+            fds[OFFSET(STDOUT_FD, READ_FD)].fd = outpair[READ_FD];
+            fds[OFFSET(STDOUT_FD, WRITE_FD)].fd = STDOUT_FD;
+            close(outpair[WRITE_FD]);
+
+            /* prevent write to stdout, we will handle it later */
+            pumps[STDOUT_FD].write_closed = 1;
+
+            /* if stdout closes, the pump must exit */
+            pumps[STDOUT_FD].exit_on_close = 1;
+
+            /* pump all data */
+            if (pump(name, pumps, fds)) {
+                status = EXIT_FAILURE;
+                break;
+            }
+
+            /* reset stdin in case we repeat the command */
+            pumps[STDIN_FD].offset = 0;
+
+            close(inpair[WRITE_FD]);
+
+            /* wait for the child process to be done */
             do {
                 w = waitpid(f, &status, 0);
                 if (w == -1 && errno != EINTR) {
@@ -186,11 +392,18 @@ int main (int argc, char **argv)
                 status = WEXITSTATUS(status);
 
                 if (!should_repeat(status, repeat_until, repeat_while)) {
+
+                    /* success - write stdout to stdout */
+                    fwrite(pumps[STDOUT_FD].base, pumps[STDOUT_FD].len, 1, stdout);
+
                     break;
                 }
 
-                fprintf(stderr, "%s: '%s' returned %d, backing off for %ld seconds and trying again...\n",
-                        name, message ? message : argv[optind], status, delay);
+                /* failure - write stdout to stderr */
+                fwrite(pumps[STDOUT_FD].base, pumps[STDOUT_FD].len, 1, stderr);
+
+                fprintf(stderr, "%s: '%s' returned %d, backing off for %ld second%s and trying again...\n",
+                        name, message ? message : argv[optind], status, delay, delay > 1 ? "s" : "");
 
                 sleep(delay);
 
@@ -212,6 +425,13 @@ int main (int argc, char **argv)
             }
         }
 
+    }
+
+    for (i = 0; i < PUMPS; i++) {
+        if (pumps[i].base) {
+            free(pumps[i].base);
+            pumps[i].base = NULL;
+        }
     }
 
     return status;
