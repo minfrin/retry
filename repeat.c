@@ -27,6 +27,7 @@
 #include <sysexits.h>
 #include <poll.h>
 #include <sys/uio.h>
+#include <ctype.h>
 
 #include "config.h"
 
@@ -88,10 +89,15 @@ static int help(const char *name, const char *msg, int code)
             "  -m message, --message=message\tA message to include in the notification\n"
             "\t\t\t\twhen repeat has backed off. Defaults to the\n"
             "\t\t\t\tcommand name.\n"
-            "  -u criteria, --until=criteria\tKeep repeating the command until the\n"
-            "\t\t\t\tcriteria is met. Default is 'success'.\n"
-            "  -w criteria, --while=criteria\tKeep repeating the command while the\n"
-            "\t\t\t\tcriteria is met.\n"
+            "  -u criteria, --until=criteria\tKeep repeating the command until any one\n"
+    		"\t\t\t\tof the comma separated criteria is met.\n"
+    		"\t\t\t\tOptions include 'success', 'true', 'fail',\n"
+    		"\t\t\t\t'false', an integer or a range of integers.\n"
+            "\t\t\t\tDefault is 'success'.\n"
+            "  -w criteria, --while=criteria\tKeep repeating the command while any one\n"
+    		"\t\t\t\tof the comma separated criteria is met.\n"
+    		"\t\t\t\tOptions include 'success', 'true', 'fail',\n"
+    		"\t\t\t\t'false', an integer or a range of integers.\n"
             "  -h, --help\t\t\tDisplay this help message.\n"
             "  -v, --version\t\t\tDisplay the version number.\n"
             "", msg ? msg : "", name);
@@ -104,12 +110,64 @@ static int version()
     return 0;
 }
 
-static int should_repeat(int status, const char *repeat_until, const char *repeat_while)
+static int status_match(int status, const char *criteria)
 {
+    int len;
 
-    /* TODO: implement criteria handling */
+    while (criteria) {
 
-    return status;
+        const char *next;
+        char *endptr;
+        long r1, r2;
+
+        next = strchr(criteria, ',');
+        if (next) {
+            len = next - criteria;
+        }
+        else {
+            len = strlen(criteria);
+        }
+
+        if (!strncmp(criteria, "success", len) ||
+                !strncmp(criteria, "true", len)) {
+            return ((status == 0));
+        }
+
+        if (!strncmp(criteria, "fail", len) ||
+                !strncmp(criteria, "false", len)) {
+            return ((status != 0));
+        }
+
+        if (!isdigit(*criteria)) {
+            return -1;
+        }
+
+        r1 = strtol(criteria, &endptr, 10);
+        if (!endptr || !*endptr || *endptr == ',') {
+            return ((status == r1));
+        }
+
+        if (*endptr++ != '-') {
+            return -1;
+        }
+
+        if (!isdigit(*endptr)) {
+            return -1;
+        }
+
+        r2 = strtol(endptr, &endptr, 10);
+        if (!endptr || !*endptr || *endptr == ',') {
+            return ((status >= r1 && status <= r2));
+        }
+
+        if (endptr && *endptr && *endptr != ',') {
+            return -1;
+        }
+
+        criteria = next;
+    }
+
+    return 1;
 }
 
 static int pump(const char *name, pump_t *pumps, struct pollfd *fds)
@@ -267,11 +325,17 @@ int main (int argc, char **argv)
 
             break;
         case 'u':
+            if (status_match(0, optarg) == -1) {
+                return help(name, "Until must contain comma separated numbers, ranges, 'success/true' or 'fail/false'.\n", EXIT_FAILURE);
+            }
             repeat_until = optarg;
             repeat_while = NULL;
 
             break;
         case 'w':
+            if (status_match(0, optarg) == -1) {
+                return help(name, "While must contain comma separated numbers, ranges, 'success/true' or 'fail/false'.\n", EXIT_FAILURE);
+            }
             repeat_until = NULL;
             repeat_while = optarg;
 
@@ -391,7 +455,9 @@ int main (int argc, char **argv)
             else if (WIFEXITED(status)) {
                 status = WEXITSTATUS(status);
 
-                if (!should_repeat(status, repeat_until, repeat_while)) {
+                if ((repeat_until && status_match(status, repeat_until))
+                        || (repeat_while && !status_match(status, repeat_while))
+                        || (!repeat_until && !repeat_while && status)) {
 
                     /* success - write stdout to stdout */
                     fwrite(pumps[STDOUT_FD].base, pumps[STDOUT_FD].len, 1, stdout);
