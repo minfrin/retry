@@ -64,6 +64,7 @@ typedef struct pump_t {
     int read_closed:1;
     int write_closed:1;
     int exit_on_close:1;
+    int send_eof:1;
 } pump_t;
 
 static int help(const char *name, const char *msg, int code)
@@ -188,7 +189,8 @@ static int pump(const char *name, pump_t *pumps, struct pollfd *fds)
                 stay = 1;
             }
 
-            if (!pumps[i].write_closed && pumps[i].len > pumps[i].offset) {
+			if (!pumps[i].write_closed
+					&& (pumps[i].send_eof || pumps[i].len > pumps[i].offset)) {
                 fds[OFFSET(i, WRITE_FD)].events = POLLOUT;
                 stay = 1;
             }
@@ -237,7 +239,9 @@ static int pump(const char *name, pump_t *pumps, struct pollfd *fds)
                     return -1;
                 }
                 else if (num == 0) {
+                    close(fds[OFFSET(i, READ_FD)].fd);
                     pumps[i].read_closed = 1;
+                    pumps[i].send_eof = 1;
                 }
                 else {
                     pumps[i].len += num;
@@ -251,6 +255,7 @@ static int pump(const char *name, pump_t *pumps, struct pollfd *fds)
 
                 close(fds[OFFSET(i, READ_FD)].fd);
                 pumps[i].read_closed = 1;
+                pumps[i].send_eof = 1;
 
             }
 
@@ -387,9 +392,11 @@ int main (int argc, char **argv)
         else if (f == 0) {
 
             dup2(inpair[READ_FD], STDIN_FD);
+            close(inpair[READ_FD]);
             close(inpair[WRITE_FD]);
-            close(outpair[READ_FD]);
             dup2(outpair[WRITE_FD], STDOUT_FD);
+            close(outpair[READ_FD]);
+            close(outpair[WRITE_FD]);
 
             execvp(argv[optind], argv + optind);
 
@@ -430,8 +437,6 @@ int main (int argc, char **argv)
 
             /* reset stdin in case we repeat the command */
             pumps[STDIN_FD].offset = 0;
-
-            close(inpair[WRITE_FD]);
 
             /* wait for the child process to be done */
             do {
