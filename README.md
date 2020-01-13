@@ -10,6 +10,15 @@ is passed on to stdout as normal, while if the command was repeated stdout is
 passed to stderr instead. This ensures that output is passed to stdout once
 and once only.
 
+# downloads
+
+The retry tool is available as RPMs through [COPR] as follows:
+
+```
+dnf copr enable minfrin/retry
+dnf install retry
+```
+
 # example
 ```
 ~$ retry --until=success false
