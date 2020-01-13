@@ -91,14 +91,14 @@ static int help(const char *name, const char *msg, int code)
             "\t\t\t\twhen repeat has backed off. Defaults to the\n"
             "\t\t\t\tcommand name.\n"
             "  -u criteria, --until=criteria\tKeep repeating the command until any one\n"
-    		"\t\t\t\tof the comma separated criteria is met.\n"
-    		"\t\t\t\tOptions include 'success', 'true', 'fail',\n"
-    		"\t\t\t\t'false', an integer or a range of integers.\n"
+            "\t\t\t\tof the comma separated criteria is met.\n"
+            "\t\t\t\tOptions include 'success', 'true', 'fail',\n"
+            "\t\t\t\t'false', an integer or a range of integers.\n"
             "\t\t\t\tDefault is 'success'.\n"
             "  -w criteria, --while=criteria\tKeep repeating the command while any one\n"
-    		"\t\t\t\tof the comma separated criteria is met.\n"
-    		"\t\t\t\tOptions include 'success', 'true', 'fail',\n"
-    		"\t\t\t\t'false', an integer or a range of integers.\n"
+            "\t\t\t\tof the comma separated criteria is met.\n"
+            "\t\t\t\tOptions include 'success', 'true', 'fail',\n"
+            "\t\t\t\t'false', an integer or a range of integers.\n"
             "  -h, --help\t\t\tDisplay this help message.\n"
             "  -v, --version\t\t\tDisplay the version number.\n"
             "", msg ? msg : "", name);
@@ -189,8 +189,8 @@ static int pump(const char *name, pump_t *pumps, struct pollfd *fds)
                 stay = 1;
             }
 
-			if (!pumps[i].write_closed
-					&& (pumps[i].send_eof || pumps[i].len > pumps[i].offset)) {
+            if (!pumps[i].write_closed
+                    && (pumps[i].send_eof || pumps[i].len > pumps[i].offset)) {
                 fds[OFFSET(i, WRITE_FD)].events = POLLOUT;
                 stay = 1;
             }
