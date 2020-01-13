@@ -1,5 +1,5 @@
 /**
- *    (C) 2016 Graham Leggett
+ *    (C) 2020 Graham Leggett
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,12 +75,12 @@ static int help(const char *name, const char *msg, int code)
             "The tool repeats the given command until the command is successful,"
             "backing off with a configurable delay between each attempt.\n"
             "\n"
-            "Repeat captures stdin into memory as the data is passed to the repeated\n"
+            "Retry captures stdin into memory as the data is passed to the repeated\n"
             "command, and this captured stdin is then replayed should the command\n"
-            "be repeated. This makes it possible to embed the repeat tool into shell\n"
+            "be repeated. This makes it possible to embed the retry tool into shell\n"
             "pipelines.\n"
             "\n"
-            "Repeat captures stdout into memory, and if the command was successful\n"
+            "Retry captures stdout into memory, and if the command was successful\n"
             "stdout is passed on to stdout as normal, while if the command was\n"
             "repeated stdout is passed to stderr instead. This ensures that output\n"
             "is passed to stdout once and once only."
