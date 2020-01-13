@@ -5,12 +5,14 @@ AC_PREREQ(2.61)
 AC_INIT(retry, 1.0.0, minfrin@sharp.fm)
 AC_CONFIG_AUX_DIR(build-aux)
 AM_INIT_AUTOMAKE([dist-bzip2])
+LT_INIT
 AC_CONFIG_FILES([Makefile retry.spec])
 AC_CONFIG_SRCDIR([retry.c])
 AC_CONFIG_HEADERS([config.h])
 
 # Checks for programs.
 AC_PROG_CC
+
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
