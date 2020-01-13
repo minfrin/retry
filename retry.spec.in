@@ -10,6 +10,8 @@ Source:    https://github.com/minfrin/%{name}/releases/download/%{name}-%{versio
 URL:	   https://github.com/minfrin/%{name}
 BuildRequires: help2man, gcc, autoconf, automake, libtool
 
+%define    __libtoolize /bin/true
+
 %description
 Repeat a command until the command succeeds.
 
