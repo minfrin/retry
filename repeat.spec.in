@@ -1,4 +1,4 @@
-# RPM Spec file for repeat
+# RPM Spec file for retry
 
 Name:      @PACKAGE_NAME@
 Version:   @PACKAGE_VERSION@
@@ -24,8 +24,8 @@ rm -rf %{_builddir}/%{name}-%{version}/debian
 %make_install
 
 %files
-%{_bindir}/repeat
-%{_mandir}/man1/repeat.1*
+%{_bindir}/retry
+%{_mandir}/man1/retry.1*
 
 %doc AUTHORS ChangeLog README
 %license COPYING

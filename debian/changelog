@@ -1,4 +1,4 @@
-repeat (1.0.0) stable; urgency=low
+retry (1.0.0) stable; urgency=low
 
   * Initial Release.
 

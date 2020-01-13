@@ -1,10 +1,10 @@
 
-bin_PROGRAMS = repeat
-repeat_SOURCES = repeat.c
+bin_PROGRAMS = retry
+retry_SOURCES = retry.c
 
-EXTRA_DIST = repeat.spec debian/changelog debian/compat debian/control debian/copyright debian/docs debian/dirs debian/rules debian/source/format
-dist_man_MANS = repeat.1
+EXTRA_DIST = retry.spec debian/changelog debian/compat debian/control debian/copyright debian/docs debian/dirs debian/rules debian/source/format
+dist_man_MANS = retry.1
 
-repeat.1: repeat
-	which help2man && help2man ./repeat > repeat.1 || true
+retry.1: retry
+	which help2man && help2man ./retry > retry.1 || true
 
