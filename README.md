@@ -30,7 +30,10 @@ retry: 'false' returned 1, backing off for 10 seconds and trying again...
 
 # more complex example
 ```
-~$ retry curl --fail http://localhost/entities | jq ... | retry curl --fail -X POST http://localhost/entities
+~$ retry curl --fail http://localhost/entities | \
+  jq ... | \
+  retry curl --fail -X POST http://localhost/resource | \
+  logger -t resource-init
 ```
 
   [COPR]: <https://copr.fedorainfracloud.org/coprs/minfrin/retry/>
