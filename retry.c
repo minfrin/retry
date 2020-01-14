@@ -239,7 +239,6 @@ static int pump(const char *name, pump_t *pumps, struct pollfd *fds)
                     return -1;
                 }
                 else if (num == 0) {
-                    close(fds[OFFSET(i, READ_FD)].fd);
                     pumps[i].read_closed = 1;
                     pumps[i].send_eof = 1;
                 }
@@ -253,7 +252,6 @@ static int pump(const char *name, pump_t *pumps, struct pollfd *fds)
                     (fds[OFFSET(i, READ_FD)].revents & POLLERR) ||
                     (fds[OFFSET(i, READ_FD)].revents & POLLNVAL)) {
 
-                close(fds[OFFSET(i, READ_FD)].fd);
                 pumps[i].read_closed = 1;
                 pumps[i].send_eof = 1;
 
@@ -279,7 +277,6 @@ static int pump(const char *name, pump_t *pumps, struct pollfd *fds)
 
                 if (pumps[i].read_closed && pumps[i].offset == pumps[i].len) {
 
-                    close(fds[OFFSET(i, WRITE_FD)].fd);
                     pumps[i].write_closed = 1;
 
                 }
@@ -289,7 +286,6 @@ static int pump(const char *name, pump_t *pumps, struct pollfd *fds)
             if ((fds[OFFSET(i, WRITE_FD)].revents & POLLERR) ||
                     (fds[OFFSET(i, WRITE_FD)].revents & POLLNVAL)) {
 
-                close(fds[OFFSET(i, WRITE_FD)].fd);
                 pumps[i].write_closed = 1;
 
             }
@@ -434,6 +430,9 @@ int main (int argc, char **argv)
                 status = EXIT_FAILURE;
                 break;
             }
+
+            close(inpair[WRITE_FD]);
+            close(outpair[READ_FD]);
 
             /* reset stdin in case we repeat the command */
             pumps[STDIN_FD].offset = 0;

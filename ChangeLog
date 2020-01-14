@@ -1,6 +1,9 @@
 
 Changes with v1.0.1
 
+  *) Move the close logic to the same place as the open logic.
+     [Graham Leggett]
+
   *) Allow zero delay. [Graham Leggett]
 
 Changes with v1.0.0
