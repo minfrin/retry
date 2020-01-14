@@ -32,6 +32,7 @@
 #include "config.h"
 
 #define DEFAULT_DELAY 10
+#define DEFAULT_TIMES -1
 
 #define STDIN_FD 0
 #define STDOUT_FD 1
@@ -52,6 +53,7 @@ static struct option long_options[] =
     {"message", required_argument, NULL, 'm'},
     {"until", required_argument, NULL, 'u'},
     {"while", required_argument, NULL, 'w'},
+    {"times", required_argument, NULL, 't'},
     {"help", no_argument, NULL, 'h'},
     {"version", no_argument, NULL, 'v'},
     {NULL, 0, NULL, 0}
@@ -90,6 +92,8 @@ static int help(const char *name, const char *msg, int code)
             "  -m message, --message=message\tA message to include in the notification\n"
             "\t\t\t\twhen repeat has backed off. Defaults to the\n"
             "\t\t\t\tcommand name.\n"
+            "  -t times, --times=times\tThe number of times to retry\n"
+            "\t\t\t\tthe command. By default we try forever.\n"
             "  -u criteria, --until=criteria\tKeep repeating the command until any one\n"
             "\t\t\t\tof the comma separated criteria is met.\n"
             "\t\t\t\tOptions include 'success', 'true', 'fail',\n"
@@ -307,6 +311,7 @@ int main (int argc, char **argv)
     pump_t pumps[PUMPS] = { 0 };
     int c, status = 0, i;
     long int delay = DEFAULT_DELAY;
+    long int times = DEFAULT_TIMES;
 
     while ((c = getopt_long(argc, argv, "d:m:u:w:hv", long_options, NULL)) != -1) {
 
@@ -323,6 +328,15 @@ int main (int argc, char **argv)
             break;
         case 'm':
             message = optarg;
+
+            break;
+        case 't':
+            errno = 0;
+            times = strtol(optarg, &endptr, 10);
+
+            if (errno || endptr[0] || times < -1) {
+                return help(name, "Times must be bigger or equal to -1.\n", EXIT_FAILURE);
+            }
 
             break;
         case 'u':
@@ -358,7 +372,7 @@ int main (int argc, char **argv)
         return help(name, "No command specified.\n", EXIT_FAILURE);
     }
 
-    while (1) {
+    while (times) {
         pid_t w, f;
         int inpair[2], outpair[2];
 
@@ -484,6 +498,10 @@ int main (int argc, char **argv)
                     fprintf(stderr,
                             "%s: '%s' returned %d, trying again...\n",
                             name, message ? message : argv[optind], status);
+                }
+
+                if (times > 0) {
+                    times--;
                 }
 
                 continue;

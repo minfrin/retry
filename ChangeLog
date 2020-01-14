@@ -1,6 +1,9 @@
 
 Changes with v1.0.1
 
+  *) Add the --times option to repeat at most N times.
+     [Graham Leggett]
+
   *) Move the close logic to the same place as the open logic.
      [Graham Leggett]
 
