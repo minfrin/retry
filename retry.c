@@ -320,8 +320,8 @@ int main (int argc, char **argv)
             errno = 0;
             delay = strtol(optarg, &endptr, 10);
 
-            if (errno || endptr[0] || delay < 1) {
-                return help(name, "Delay must be bigger or equal to 1.\n", EXIT_FAILURE);
+            if (errno || endptr[0] || delay < 0) {
+                return help(name, "Delay must be bigger or equal to 0.\n", EXIT_FAILURE);
             }
 
             break;
@@ -473,10 +473,19 @@ int main (int argc, char **argv)
                 /* failure - write stdout to stderr */
                 fwrite(pumps[STDOUT_FD].base, pumps[STDOUT_FD].len, 1, stderr);
 
-                fprintf(stderr, "%s: '%s' returned %d, backing off for %ld second%s and trying again...\n",
-                        name, message ? message : argv[optind], status, delay, delay > 1 ? "s" : "");
+				if (delay) {
+					fprintf(stderr,
+							"%s: '%s' returned %d, backing off for %ld second%s and trying again...\n",
+							name, message ? message : argv[optind], status,
+							delay, delay > 1 ? "s" : "");
 
-                sleep(delay);
+					sleep(delay);
+				}
+				else {
+					fprintf(stderr,
+							"%s: '%s' returned %d, trying again...\n",
+							name, message ? message : argv[optind], status);
+				}
 
                 continue;
             }

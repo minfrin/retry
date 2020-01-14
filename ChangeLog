@@ -1,4 +1,8 @@
 
+Changes with v1.0.1
+
+  *) Allow zero delay. [Graham Leggett]
+
 Changes with v1.0.0
 
   *) Initial creation of the autotools. [Graham Leggett]
