@@ -33,3 +33,5 @@ retry: 'false' returned 1, backing off for 10 seconds and trying again...
 ~$ retry curl --fail http://localhost/entities | jq ... | retry curl --fail -X POST http://localhost/entities
 ```
 
+  [COPR]: <https://copr.fedorainfracloud.org/coprs/minfrin/retry/>
+
