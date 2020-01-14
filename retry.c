@@ -473,19 +473,19 @@ int main (int argc, char **argv)
                 /* failure - write stdout to stderr */
                 fwrite(pumps[STDOUT_FD].base, pumps[STDOUT_FD].len, 1, stderr);
 
-				if (delay) {
-					fprintf(stderr,
-							"%s: '%s' returned %d, backing off for %ld second%s and trying again...\n",
-							name, message ? message : argv[optind], status,
-							delay, delay > 1 ? "s" : "");
+                if (delay) {
+                    fprintf(stderr,
+                            "%s: '%s' returned %d, backing off for %ld second%s and trying again...\n",
+                            name, message ? message : argv[optind], status,
+                            delay, delay > 1 ? "s" : "");
 
-					sleep(delay);
-				}
-				else {
-					fprintf(stderr,
-							"%s: '%s' returned %d, trying again...\n",
-							name, message ? message : argv[optind], status);
-				}
+                    sleep(delay);
+                }
+                else {
+                    fprintf(stderr,
+                            "%s: '%s' returned %d, trying again...\n",
+                            name, message ? message : argv[optind], status);
+                }
 
                 continue;
             }
