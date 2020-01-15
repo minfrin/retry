@@ -4,6 +4,9 @@ retry.1
 retry.spec
 
 build-aux
+debian/.debhelper
+debian/retry
+debian/retry.debhelper.log
 
 # http://www.gnu.org/software/automake
 

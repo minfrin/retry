@@ -1,4 +1,9 @@
 
+Changes with v1.0.2
+
+  *) Add help2man to debian packaging build dependencies.
+     [Graham Leggett]
+
 Changes with v1.0.1
 
   *) Add the --times option to repeat at most N times.

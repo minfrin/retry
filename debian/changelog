@@ -1,4 +1,14 @@
-retry (1.0.0) stable; urgency=low
+retry (1.0.2) bionic; urgency=low
+  
+  * Bugfix/Feature Release
+
+ -- Graham Leggett <minfrin@sharp.fm>  Wed, 15 Jan 2020 00:00:00 +0000
+retry (1.0.1) bionic; urgency=low
+  
+  * Bugfix/Feature Release
+
+ -- Graham Leggett <minfrin@sharp.fm>  Tue, 14 Jan 2020 00:00:00 +0000
+retry (1.0.0) bionic; urgency=low
 
   * Initial Release.
 

@@ -1,8 +1,8 @@
 Source: retry
-Priority: extra
+Priority: optional
 Maintainer: Graham Leggett <minfrin@sharp.fm>
-Build-Depends: debhelper (>= 8.0.0), autotools-dev
-Standards-Version: 3.9.4
+Build-Depends: debhelper (>= 8.0.0), autotools-dev, help2man
+Standards-Version: 4.1.4
 Section: utils
 Homepage: https://github.com/minfrin/retry
 
@@ -10,5 +10,6 @@ Package: retry
 Section: utils
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Retry a command until the command succeeds.
+Description: Keep retrying a command until the command meets
+ a specific criteria, usually success.
 

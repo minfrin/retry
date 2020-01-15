@@ -6,5 +6,5 @@ EXTRA_DIST = retry.spec debian/changelog debian/compat debian/control debian/cop
 dist_man_MANS = retry.1
 
 retry.1: retry.c $(top_srcdir)/configure.ac
-	which help2man && help2man ./retry > retry.1 || true
+	which help2man && help2man -n "Repeat command until a criteria is met, usually success." ./retry > retry.1 || true
 
