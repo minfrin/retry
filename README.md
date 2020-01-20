@@ -19,7 +19,7 @@ dnf copr enable minfrin/retry
 dnf install retry
 ```
 
-There is also a PPA for Ubuntu as follows:
+There is also a [PPA] for Ubuntu as follows:
 
 ```
 sudo add-apt-repository ppa:minfrin/retry
@@ -45,4 +45,4 @@ retry: 'false' returned 1, backing off for 10 seconds and trying again...
 ```
 
   [COPR]: <https://copr.fedorainfracloud.org/coprs/minfrin/retry/>
-
+  [PPA]: <https://launchpad.net/~minfrin/+archive/ubuntu/retry>
