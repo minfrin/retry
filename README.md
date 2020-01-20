@@ -19,6 +19,14 @@ dnf copr enable minfrin/retry
 dnf install retry
 ```
 
+There is also a PPA for Ubuntu as follows:
+
+```
+sudo add-apt-repository ppa:minfrin/retry
+sudo apt-get update
+sudo apt-get install retry
+```
+
 # example
 ```
 ~$ retry --until=success false
