@@ -1,4 +1,6 @@
 
+ACLOCAL_AMFLAGS = -I m4
+
 bin_PROGRAMS = retry
 retry_SOURCES = retry.c
 
