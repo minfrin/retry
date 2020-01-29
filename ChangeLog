@@ -1,4 +1,8 @@
 
+CHanges with v1.0.3
+
+  *) Switch from help2man to txt2man. [Graham Leggett]
+
 Changes with v1.0.2
 
   *) Add help2man to debian packaging build dependencies.
