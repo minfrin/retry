@@ -1,5 +1,11 @@
 
-CHanges with v1.0.3
+Changes with v1.0.4
+
+  *) Fix an issue where the stdout of the retried command
+     was not correctly captured on the second try. [Graham
+     Leggett]
+
+Changes with v1.0.3
 
   *) Switch from help2man to txt2man. [Graham Leggett]
 
