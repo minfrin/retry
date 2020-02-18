@@ -573,7 +573,7 @@ int main (int argc, char **argv)
 
                 if (delay) {
                     fprintf(stderr,
-                            "%s: '%s' returned %d, backing off for %ld second%s and trying again...\n",
+                            "%s: %s returned %d, backing off for %ld second%s and trying again...\n",
                             name, message ? message : argv[optind], status,
                             delay, delay > 1 ? "s" : "");
 
@@ -581,7 +581,7 @@ int main (int argc, char **argv)
                 }
                 else {
                     fprintf(stderr,
-                            "%s: '%s' returned %d, trying again...\n",
+                            "%s: %s returned %d, trying again...\n",
                             name, message ? message : argv[optind], status);
                 }
 
