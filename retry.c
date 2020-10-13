@@ -50,6 +50,7 @@
 static struct option long_options[] =
 {
     {"delay", required_argument, NULL, 'd'},
+    {"exponential-backoff", no_argument, NULL, 'x'},
     {"message", required_argument, NULL, 'm'},
     {"until", required_argument, NULL, 'u'},
     {"while", required_argument, NULL, 'w'},
@@ -113,6 +114,10 @@ static int help(const char *name, const char *msg, int code)
             "OPTIONS\n"
             "  -d seconds, --delay=seconds  The number of seconds to back off\n"
             "    after each attempt.\n"
+            "\n"
+            "  -x, --exponential-backoff    Backoff exponentially after each\n"
+            "    attempt, starting with the number of seconds specified by -d/--delay\n"
+            "    and doubling it at each step.\n"
             "\n"
             "  -m message, --message=message  A message to include in the notification\n"
             "    when repeat has backed off. Defaults to the\n"
@@ -390,9 +395,10 @@ int main (int argc, char **argv)
     pump_t pumps[PUMPS] = { 0 };
     int c, status = 0, i;
     long int delay = DEFAULT_DELAY;
+    int exponential = 0;
     long int times = DEFAULT_TIMES;
 
-    while ((c = getopt_long(argc, argv, "d:m:t:u:w:hv", long_options, NULL)) != -1) {
+    while ((c = getopt_long(argc, argv, "d:xm:t:u:w:hv", long_options, NULL)) != -1) {
 
         switch (c)
         {
@@ -403,6 +409,10 @@ int main (int argc, char **argv)
             if (errno || endptr[0] || delay < 0) {
                 return help(name, "Delay must be bigger or equal to 0.\n", EXIT_FAILURE);
             }
+
+            break;
+        case 'x':
+            exponential = 1;
 
             break;
         case 'm':
@@ -578,6 +588,9 @@ int main (int argc, char **argv)
                             delay, delay > 1 ? "s" : "");
 
                     sleep(delay);
+                    if (exponential) {
+                        delay = delay * 2;
+                    }
                 }
                 else {
                     fprintf(stderr,
