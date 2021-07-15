@@ -392,7 +392,7 @@ int main (int argc, char **argv)
     long int delay = DEFAULT_DELAY;
     long int times = DEFAULT_TIMES;
 
-    while ((c = getopt_long(argc, argv, "d:m:t:u:w:hv", long_options, NULL)) != -1) {
+    while ((c = getopt_long(argc, argv, "+d:m:t:u:w:hv", long_options, NULL)) != -1) {
 
         switch (c)
         {
