@@ -5,15 +5,27 @@ Version:   @PACKAGE_VERSION@
 Release:   1%{?dist}
 Summary:   Repeat a command until success
 License:   ASL 2.0
-Group:     Applications/System
-Source:    https://github.com/minfrin/%{name}/releases/download/%{name}-%{version}/%{name}-%{version}.tar.bz2
-URL:       https://github.com/minfrin/%{name}
-BuildRequires: gcc, autoconf, automake, libtool
 
-%define    __libtoolize /bin/true
+URL:       https://github.com/minfrin/%{name}
+Source0:   %{URL}/archive/%{name}-%{version}/%{name}-%{version}.tar.gz
+BuildRequires: gcc
+BuildRequires: autoconf
+BuildRequires: automake
+BuildRequires: libtool
 
 %description
-Repeat a command until the command succeeds.
+The tool repeats the given command until the command is successful,
+backing off with a configurable delay between each attempt.
+
+Retry captures stdin into memory as the data is passed to the repeated
+command, and this captured stdin is then replayed should the command
+be repeated. This makes it possible to embed the retry tool into shell
+pipelines.
+
+Retry captures stdout into memory, and if the command was successful
+stdout is passed on to stdout as normal, while if the command was
+repeated stdout is passed to stderr instead. This ensures that output
+is passed to stdout once and once only.
 
 %prep
 %setup -q
