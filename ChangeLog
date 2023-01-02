@@ -1,4 +1,9 @@
 
+Changes with v1.0.5
+
+  *) Allow multiple comma separated delay values. [Graham
+     Leggett]
+
 Changes with v1.0.4
 
   *) Fix an issue where the stdout of the retried command
