@@ -29,7 +29,7 @@ sudo apt-get install retry
 
 # example
 ```
-~$ retry --until=success false
+~$ retry --until=success -- false
 retry: 'false' returned 1, backing off for 10 seconds and trying again...
 retry: 'false' returned 1, backing off for 10 seconds and trying again...
 retry: 'false' returned 1, backing off for 10 seconds and trying again...
@@ -38,15 +38,15 @@ retry: 'false' returned 1, backing off for 10 seconds and trying again...
 
 # more complex example
 ```
-~$ retry curl --fail http://localhost/entities | \
+~$ retry -- curl --fail http://localhost/entities | \
   jq ... | \
-  retry curl --fail -X POST http://localhost/resource | \
+  retry -- curl --fail -X POST http://localhost/resource | \
   logger -t resource-init
 ```
 
 # staggered delays
 ```
-~$ retry --until=success --delay "1,2,4,8,16,32,64" false
+~$ retry --until=success --delay "1,2,4,8,16,32,64" -- false
 retry: false returned 1, backing off for 1 second and trying again...
 retry: false returned 1, backing off for 2 seconds and trying again...
 retry: false returned 1, backing off for 4 seconds and trying again...
