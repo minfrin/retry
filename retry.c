@@ -151,7 +151,7 @@ static int help(const char *name, const char *msg, int code)
             "EXAMPLES\n"
             "  In this basic example, we repeat the command forever.\n"
             "\n"
-            "\t~$ retry --until=success false\n"
+            "\t~$ retry --until=success -- false\n"
             "\tretry: 'false' returned 1, backing off for 10 seconds and trying again...\n"
             "\tretry: 'false' returned 1, backing off for 10 seconds and trying again...\n"
             "\tretry: 'false' returned 1, backing off for 10 seconds and trying again...\n"
@@ -162,10 +162,26 @@ static int help(const char *name, const char *msg, int code)
             "  passed once and once only to the next element in the\n"
             "  pipeline.\n"
             "\n"
-            "\t~$ retry curl --fail http://localhost/entities | \\\\ \n"
+            "\t~$ retry -- curl --fail http://localhost/entities | \\\\ \n"
             "\tjq ... | \\\\ \n"
-            "\tretry curl --fail -X POST http://localhost/resource | \\\\ \n"
+            "\tretry -- curl --fail -X POST http://localhost/resource | \\\\ \n"
             "\tlogger -t resource-init\n"
+            "\n"
+            "  In this example, we stagger each delay exponentially\n"
+            "  until 64 seconds, which is then repeated until\n"
+            "  interrupted.\n"
+            "\n"
+            "\t~$ retry --until=success --delay \"1,2,4,8,16,32,64\" -- false\n"
+            "\tretry: false returned 1, backing off for 1 second and trying again...\n"
+            "\tretry: false returned 1, backing off for 2 seconds and trying again...\n"
+            "\tretry: false returned 1, backing off for 4 seconds and trying again...\n"
+            "\tretry: false returned 1, backing off for 8 seconds and trying again...\n"
+            "\tretry: false returned 1, backing off for 16 seconds and trying again...\n"
+            "\tretry: false returned 1, backing off for 32 seconds and trying again...\n"
+            "\tretry: false returned 1, backing off for 64 seconds and trying again...\n"
+            "\tretry: false returned 1, backing off for 64 seconds and trying again...\n"
+            "\tretry: false returned 1, backing off for 64 seconds and trying again...\n"
+            "\t^C\n"
             "\n"
             "AUTHOR\n"
             "  Graham Leggett <minfrin@sharp.fm>\n"
@@ -402,9 +418,9 @@ int main (int argc, char **argv)
             delay = optarg;
 
             do {
-            	errno = 0;
+                errno = 0;
 
-            	d = strtol(optarg, &optarg, 10);
+                d = strtol(optarg, &optarg, 10);
 
                 if (errno || (optarg[0] && optarg[0] != ',') || d < 0) {
                     return help(name, "Delay(s) must be bigger or equal to 0.\n", EXIT_FAILURE);
@@ -580,10 +596,10 @@ int main (int argc, char **argv)
                 memset(&pumps[STDOUT_FD], 0, sizeof(pump_t));
 
                 if (delay[0]) {
-            	    d = strtol(delay, &delay, 10);
+                    d = strtol(delay, &delay, 10);
                 }
                 if (delay[0] == ',') {
-                	delay++;
+                    delay++;
                 }
 
                 if (d) {
