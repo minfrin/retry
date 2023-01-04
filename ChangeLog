@@ -1,6 +1,9 @@
 
 Changes with v1.0.5
 
+  *) End getopt parsing on first non-option argument.
+     [recyard]
+
   *) Allow multiple comma separated delay values. [Graham
      Leggett]
 
