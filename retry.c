@@ -31,7 +31,7 @@
 
 #include "config.h"
 
-#define DEFAULT_DELAY 10
+#define DEFAULT_DELAY "10"
 #define DEFAULT_TIMES -1
 
 #define STDIN_FD 0
@@ -112,7 +112,9 @@ static int help(const char *name, const char *msg, int code)
             "\n"
             "OPTIONS\n"
             "  -d seconds, --delay=seconds  The number of seconds to back off\n"
-            "    after each attempt.\n"
+            "    after each attempt. Multiple comma separated\n"
+            "    delays allow subsequent delays to be different,\n"
+            "    with the last delay repeated.\n"
             "\n"
             "  -m message, --message=message  A message to include in the notification\n"
             "    when repeat has backed off. Defaults to the\n"
@@ -386,10 +388,10 @@ int main (int argc, char **argv)
     const char *repeat_until = "success";
     const char *repeat_while = NULL;
     const char *message = NULL;
-    char *endptr = NULL;
+    char *delay = DEFAULT_DELAY;
     pump_t pumps[PUMPS] = { 0 };
     int c, status = 0, i;
-    long int delay = DEFAULT_DELAY;
+    long int d = 0;
     long int times = DEFAULT_TIMES;
 
     while ((c = getopt_long(argc, argv, "d:m:t:u:w:hv", long_options, NULL)) != -1) {
@@ -397,12 +399,18 @@ int main (int argc, char **argv)
         switch (c)
         {
         case 'd':
-            errno = 0;
-            delay = strtol(optarg, &endptr, 10);
+            delay = optarg;
 
-            if (errno || endptr[0] || delay < 0) {
-                return help(name, "Delay must be bigger or equal to 0.\n", EXIT_FAILURE);
-            }
+            do {
+            	errno = 0;
+
+            	d = strtol(optarg, &optarg, 10);
+
+                if (errno || (optarg[0] && optarg[0] != ',') || d < 0) {
+                    return help(name, "Delay(s) must be bigger or equal to 0.\n", EXIT_FAILURE);
+                }
+
+            } while (optarg++[0] == ',');
 
             break;
         case 'm':
@@ -411,9 +419,9 @@ int main (int argc, char **argv)
             break;
         case 't':
             errno = 0;
-            times = strtol(optarg, &endptr, 10);
+            times = strtol(optarg, &optarg, 10);
 
-            if (errno || endptr[0] || times < -1) {
+            if (errno || optarg[0] || times < -1) {
                 return help(name, "Times must be bigger or equal to -1.\n", EXIT_FAILURE);
             }
 
@@ -571,13 +579,20 @@ int main (int argc, char **argv)
                 free(pumps[STDOUT_FD].base);
                 memset(&pumps[STDOUT_FD], 0, sizeof(pump_t));
 
-                if (delay) {
+                if (delay[0]) {
+            	    d = strtol(delay, &delay, 10);
+                }
+                if (delay[0] == ',') {
+                	delay++;
+                }
+
+                if (d) {
                     fprintf(stderr,
                             "%s: %s returned %d, backing off for %ld second%s and trying again...\n",
                             name, message ? message : argv[optind], status,
-                            delay, delay > 1 ? "s" : "");
+                            d, d > 1 ? "s" : "");
 
-                    sleep(delay);
+                    sleep(d);
                 }
                 else {
                     fprintf(stderr,
