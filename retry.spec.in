@@ -45,7 +45,7 @@ is passed to stdout once and once only.
 %license COPYING
 
 %changelog
-* Wed Jan 04 2022 Graham Leggett <minfrin@sharp.fm> - 1.0.5-1
+* Wed Jan 04 2023 Graham Leggett <minfrin@sharp.fm> - 1.0.5-1
 - Allow multiple comma separated delay values.
 - End getopt parsing on first non-option argument.
 * Tue Feb 18 2020 Graham Leggett <minfrin@sharp.fm> - 1.0.4-1
