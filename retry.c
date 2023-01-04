@@ -391,7 +391,7 @@ int main (int argc, char **argv)
     char *delay = DEFAULT_DELAY;
     pump_t pumps[PUMPS] = { 0 };
     int c, status = 0, i;
-    long int d;
+    long int d = 0;
     long int times = DEFAULT_TIMES;
 
     while ((c = getopt_long(argc, argv, "d:m:t:u:w:hv", long_options, NULL)) != -1) {
