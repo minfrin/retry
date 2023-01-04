@@ -29,7 +29,7 @@ is passed to stdout once and once only.
 
 %prep
 %setup -q
-rm -rf %{_builddir}/%{name}-%{version}/debian
+
 %build
 %configure
 %make_build
@@ -45,6 +45,9 @@ rm -rf %{_builddir}/%{name}-%{version}/debian
 %license COPYING
 
 %changelog
+* Wed Jan 04 2022 Graham Leggett <minfrin@sharp.fm> - 1.0.5-1
+- Allow multiple comma separated delay values.
+- End getopt parsing on first non-option argument.
 * Tue Feb 18 2020 Graham Leggett <minfrin@sharp.fm> - 1.0.4-1
 - Fix an issue where the stdout of the retried command
   was not correctly captured on the second try.
