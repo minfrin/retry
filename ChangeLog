@@ -1,4 +1,10 @@
 
+Changes with v1.0.6
+
+  *) Generate the man page during the dist hook, and not
+     at build time. This makes life easy for parallel and
+     cross compiled builds. [Graham Leggett]
+
 Changes with v1.0.5
 
   *) End getopt parsing on first non-option argument.
