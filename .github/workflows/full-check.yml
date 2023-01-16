@@ -16,9 +16,14 @@ jobs:
            autoreconf -fi
            ./configure
            make
-           if [ -e retry.1 ]
+           if [ ! -f retry.1 ]
            then
-                echo "ERROR: found a manpage."
+                echo "ERROR: manpage was missing."
+                exit 1
+           fi
+           if [ ! retry.1 -ot retry ]
+           then
+                echo "ERROR: manpage was rebuilt by make."
                 exit 1
            fi
            sudo make install
@@ -31,9 +36,14 @@ jobs:
            for i in 1 2 3 4 5
            do
                 make -j2
-                if [ -e retry.1 ]
+                if [ ! -f retry.1 ]
                 then
-                     echo "ERROR: found a manpage."
+                     echo "ERROR: manpage was missing."
+                     exit 1
+                fi
+                if [ ! retry.1 -ot retry ]
+                then
+                     echo "ERROR: manpage was rebuilt by make."
                      exit 1
                 fi
            done
