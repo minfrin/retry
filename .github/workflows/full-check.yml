@@ -15,6 +15,16 @@ jobs:
       run: |
            autoreconf -fi
            ./configure
+           make dist
+           head retry.1; cat retry.1 | grep -C5 "try forever" || exit 1
+
+           mkdir test_dist_1
+           cp retry-*.tar.gz test_dist_1
+           pushd test_dist_1
+           tar -xvf retry-*.tar.gz
+           rm -f retry-*.tar.gz
+           cd retry-*
+           ./configure
            make
            if [ ! -f retry.1 ]
            then
@@ -28,6 +38,42 @@ jobs:
            fi
            sudo make install
            sudo make uninstall
+           popd
+
+           mkdir test_dist_2
+           cp retry-*.tar.gz test_dist_2
+           pushd test_dist_2
+           tar -xvf retry-*.tar.gz
+           rm -f retry-*.tar.gz
+           cd retry-*
+           ./configure
+           make
+           if [ ! -f retry.1 ]
+           then
+                echo "ERROR: manpage was missing."
+                exit 1
+           fi
+           if [ ! retry.1 -ot retry ]
+           then
+                echo "ERROR: manpage was rebuilt by make."
+                exit 1
+           fi
+           sudo make install
+           sudo make uninstall
+           popd
+
+           strip test_dist_1/retry-*/retry
+           strip test_dist_2/retry-*/retry
+           if ! cmp test_dist_1/retry-*/retry test_dist_2/retry-*/retry
+           then
+                echo "ERROR: retry build was not repeatable."
+                exit 1
+           fi
+           if ! cmp test_dist_1/retry-*/retry.1 test_dist_2/retry-*/retry.1
+           then
+                echo "ERROR: retry.1 build was not repeatable."
+                exit 1
+           fi
            make distclean
     - name: second_build_parallel
       run: |
@@ -52,27 +98,3 @@ jobs:
       run: |
            retry --until=success true
            retry -t 3 -d 3 -u success ls
-    - name: test_make_dist
-      run: |
-           make distclean
-           autoreconf -fi -Werror -Wall
-           ./configure
-           make dist
-           if [ retry.1 -ot retry ]
-           then
-                echo "ERROR: manpage was not rebuilt by make dist."
-                exit 1
-           fi
-           mkdir test_dist
-           mv retry-*.tar.gz test_dist
-           cd test_dist
-           pwd
-           tar -xvf retry-*.tar.gz
-           rm -f retry-*.tar.gz
-           cd retry-*
-           ./configure
-           make -j2; head retry.1; cat retry.1 | grep -C5 "try forever" || exit 1
-           ls
-           sudo make install
-           sudo make uninstall
-           make distclean
