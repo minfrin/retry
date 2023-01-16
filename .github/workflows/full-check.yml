@@ -1,0 +1,63 @@
+name: full-check
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: install_dependencies
+      run: sudo apt install txt2man
+    - name: first_build_non_parallel
+      run: |
+           autoreconf -fi
+           ./configure
+           make
+           if [ -e retry.1 ]
+           then
+                echo "ERROR: found a manpage."
+                exit 1
+           fi
+           sudo make install
+           sudo make uninstall
+           make distclean
+    - name: second_build_parallel
+      run: |
+           autoreconf -fi
+           ./configure
+           for i in 1 2 3 4 5
+           do
+                make -j2
+                if [ -e retry.1 ]
+                then
+                     echo "ERROR: found a manpage."
+                     exit 1
+                fi
+           done
+           sudo make install
+    - name: run_program
+      run: |
+           retry --until=success true
+           retry -t 3 -d 3 -u success ls
+    - name: test_make_dist
+      run: |
+           make distclean
+           autoreconf -fi -Werror -Wall
+           ./configure
+           make dist
+           mkdir test_dist
+           mv retry-*.tar.gz test_dist
+           cd test_dist
+           pwd
+           tar -xvf retry-*.tar.gz
+           rm -f retry-*.tar.gz
+           cd retry-*
+           ./configure
+           make -j2; head retry.1; cat retry.1 | grep -C5 "try forever" || exit 1
+           ls
+           sudo make install
+           sudo make uninstall
+           make distclean
