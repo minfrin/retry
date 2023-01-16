@@ -58,6 +58,11 @@ jobs:
            autoreconf -fi -Werror -Wall
            ./configure
            make dist
+           if [ retry.1 -ot retry ]
+           then
+                echo "ERROR: manpage was not rebuilt by make dist."
+                exit 1
+           fi
            mkdir test_dist
            mv retry-*.tar.gz test_dist
            cd test_dist
