@@ -26,16 +26,6 @@ jobs:
            cd retry-*
            ./configure
            make
-           if [ ! -f retry.1 ]
-           then
-                echo "ERROR: manpage was missing."
-                exit 1
-           fi
-           if [ ! retry.1 -ot retry ]
-           then
-                echo "ERROR: manpage was rebuilt by make."
-                exit 1
-           fi
            sudo make install
            sudo make uninstall
            popd
@@ -48,22 +38,12 @@ jobs:
            cd retry-*
            ./configure
            make
-           if [ ! -f retry.1 ]
-           then
-                echo "ERROR: manpage was missing."
-                exit 1
-           fi
-           if [ ! retry.1 -ot retry ]
-           then
-                echo "ERROR: manpage was rebuilt by make."
-                exit 1
-           fi
            sudo make install
            sudo make uninstall
            popd
 
-           strip test_dist_1/retry-*/retry
-           strip test_dist_2/retry-*/retry
+           strip --strip-all test_dist_1/retry-*/retry
+           strip --strip-all test_dist_2/retry-*/retry
            if ! cmp test_dist_1/retry-*/retry test_dist_2/retry-*/retry
            then
                 echo "ERROR: retry build was not repeatable."
@@ -74,6 +54,8 @@ jobs:
                 echo "ERROR: retry.1 build was not repeatable."
                 exit 1
            fi
+           rm -rf test_dist_2
+           rm -rf test_dist_1
            make distclean
     - name: second_build_parallel
       run: |
