@@ -18,9 +18,9 @@ jobs:
            make dist
            head retry.1; cat retry.1 | grep -C5 "try forever" || exit 1
 
-           mkdir test_dist_1
-           cp retry-*.tar.gz test_dist_1
-           pushd test_dist_1
+           mkdir test_dist
+           cp retry-*.tar.gz test_dist
+           pushd test_dist
            tar -xvf retry-*.tar.gz
            rm -f retry-*.tar.gz
            cd retry-*
@@ -29,10 +29,11 @@ jobs:
            sudo make install
            sudo make uninstall
            popd
+           mv test_dist test_dist_1
 
-           mkdir test_dist_2
-           cp retry-*.tar.gz test_dist_2
-           pushd test_dist_2
+           mkdir test_dist
+           cp retry-*.tar.gz test_dist
+           pushd test_dist
            tar -xvf retry-*.tar.gz
            rm -f retry-*.tar.gz
            cd retry-*
@@ -41,6 +42,7 @@ jobs:
            sudo make install
            sudo make uninstall
            popd
+           mv test_dist test_dist_2
 
            strip --strip-all test_dist_1/retry-*/retry
            strip --strip-all test_dist_2/retry-*/retry
