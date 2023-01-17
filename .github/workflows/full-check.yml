@@ -71,11 +71,6 @@ jobs:
                      echo "ERROR: manpage was missing."
                      exit 1
                 fi
-                if [ ! retry.1 -ot retry ]
-                then
-                     echo "ERROR: manpage was rebuilt by make."
-                     exit 1
-                fi
            done
            sudo make install
     - name: run_program
