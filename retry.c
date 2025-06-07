@@ -28,6 +28,7 @@
 #include <poll.h>
 #include <sys/uio.h>
 #include <ctype.h>
+#include <time.h>
 
 #include "config.h"
 
@@ -50,6 +51,7 @@
 static struct option long_options[] =
 {
     {"delay", required_argument, NULL, 'd'},
+    {"jitter", required_argument, NULL, 'j'},
     {"message", required_argument, NULL, 'm'},
     {"until", required_argument, NULL, 'u'},
     {"while", required_argument, NULL, 'w'},
@@ -115,6 +117,10 @@ static int help(const char *name, const char *msg, int code)
             "    after each attempt. Multiple comma separated\n"
             "    delays allow subsequent delays to be different,\n"
             "    with the last delay repeated.\n"
+            "\n"
+            "  -j seconds, --jitter=seconds  The number of seconds of jitter\n"
+            "    to add to each delay attempt. A random number of nanoseconds between\n"
+            "    zero and this number will be added to the delay.\n"
             "\n"
             "  -m message, --message=message  A message to include in the notification\n"
             "    when repeat has backed off. Defaults to the\n"
@@ -185,7 +191,7 @@ static int help(const char *name, const char *msg, int code)
             "\n"
             "  In this example, we try three times before giving up.\n"
             "\n"
-    		"\t~$ retry --times=3 -- false\n"
+            "\t~$ retry --times=3 -- false\n"
             "\tretry: false returned 1, backing off for 10 seconds and trying again...\n"
             "\tretry: false returned 1, backing off for 10 seconds and trying again...\n"
             "\tretry: false returned 1, giving up.\n"
@@ -405,6 +411,37 @@ static int pump(const char *name, pump_t *pumps)
     return 0;
 }
 
+void seed_jitter()
+{
+    struct timespec ts;
+
+    /*
+     * Seed the random number generator with the number of
+     * nanoseconds returned by the system clock.
+     *
+     * Two retries should be unlikely to return the same
+     * number of nanoseconds.
+     */
+
+    clock_gettime(CLOCK_REALTIME, &ts);
+
+    srand((unsigned int)ts.tv_nsec);
+
+    return;
+}
+
+void add_jitter(long int j, struct timespec *ts)
+{
+    /*
+     * We assume that sampling bias is not a big enough
+     * problem for jitter.
+     *
+     * The nanoseconds should smear a thundering herd.
+     */
+    ts->tv_sec += rand() % (j);
+    ts->tv_nsec += rand() % (1000000000);
+}
+
 int main (int argc, char **argv)
 {
     const char *name = argv[0];
@@ -412,12 +449,14 @@ int main (int argc, char **argv)
     const char *repeat_while = NULL;
     const char *message = NULL;
     char *delay = DEFAULT_DELAY;
+    struct timespec ts;
     pump_t pumps[PUMPS] = { 0 };
     int c, status = 0, i;
     long int d = 0;
+    long int j = 0;
     long int times = DEFAULT_TIMES;
 
-    while ((c = getopt_long(argc, argv, "+d:m:t:u:w:hv", long_options, NULL)) != -1) {
+    while ((c = getopt_long(argc, argv, "+d:j:m:t:u:w:hv", long_options, NULL)) != -1) {
 
         switch (c)
         {
@@ -434,6 +473,16 @@ int main (int argc, char **argv)
                 }
 
             } while (optarg++[0] == ',');
+
+            break;
+        case 'j':
+            errno = 0;
+
+            j = strtol(optarg, &optarg, 10);
+
+            if (errno || optarg[0] || j < 0) {
+                return help(name, "Jitter must be bigger or equal to 0.\n", EXIT_FAILURE);
+            }
 
             break;
         case 'm':
@@ -481,6 +530,8 @@ int main (int argc, char **argv)
     if (optind == argc) {
         return help(name, "No command specified.\n", EXIT_FAILURE);
     }
+
+    seed_jitter();
 
     while (times) {
         pid_t w, f;
@@ -617,13 +668,20 @@ int main (int argc, char **argv)
                     delay++;
                 }
 
-                if (d) {
+                ts.tv_sec = d;
+                ts.tv_nsec = 0;
+
+                if (j) {
+                    add_jitter(j, &ts);
+                }
+
+                if (ts.tv_sec && ts.tv_nsec) {
                     fprintf(stderr,
                             "%s: %s returned %d, backing off for %ld second%s and trying again...\n",
                             name, message ? message : argv[optind], status,
-                            d, d > 1 ? "s" : "");
+                            (long)ts.tv_sec, ts.tv_sec != 1 ? "s" : "");
 
-                    sleep(d);
+                    nanosleep(&ts, NULL);
                 }
                 else {
                     fprintf(stderr,

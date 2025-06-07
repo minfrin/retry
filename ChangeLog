@@ -1,6 +1,8 @@
 
 Changes with v1.0.6
 
+  *) Add optional jitter to the delay. [Graham Leggett]
+
   *) Avoid the final delay when running a command a
      specific number of times. [Graham Leggett]
 
