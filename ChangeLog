@@ -1,4 +1,9 @@
 
+Changes with v1.0.7
+
+  *) Avoid the final delay when running a command a
+     specific number of times. [Graham Leggett]
+
 Changes with v1.0.6
 
   *) Generate the man page during the dist hook, and not
