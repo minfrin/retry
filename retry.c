@@ -675,7 +675,7 @@ int main (int argc, char **argv)
                     add_jitter(j, &ts);
                 }
 
-                if (ts.tv_sec && ts.tv_nsec) {
+                if (ts.tv_sec || ts.tv_nsec) {
                     fprintf(stderr,
                             "%s: %s returned %d, backing off for %ld second%s and trying again...\n",
                             name, message ? message : argv[optind], status,
