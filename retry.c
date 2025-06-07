@@ -120,7 +120,7 @@ static int help(const char *name, const char *msg, int code)
             "    when repeat has backed off. Defaults to the\n"
             "    command name.\n"
             "\n"
-            "  -t times, --times=times  The number of times to retry\n"
+            "  -t times, --times=times  Total number of times to try\n"
             "    the command. By default we try forever.\n"
             "\n"
             "  -u criteria, --until=criteria  Keep repeating the command until any one\n"
