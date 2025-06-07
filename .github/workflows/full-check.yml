@@ -15,6 +15,7 @@ jobs:
       run: |
            autoreconf -fi
            ./configure
+           make
            make dist
            head retry.1; cat retry.1 | grep -C5 "try forever" || exit 1
 

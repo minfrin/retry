@@ -120,7 +120,7 @@ static int help(const char *name, const char *msg, int code)
             "    when repeat has backed off. Defaults to the\n"
             "    command name.\n"
             "\n"
-            "  -t times, --times=times  The number of times to retry\n"
+            "  -t times, --times=times  Total number of times to try\n"
             "    the command. By default we try forever.\n"
             "\n"
             "  -u criteria, --until=criteria  Keep repeating the command until any one\n"
@@ -182,6 +182,13 @@ static int help(const char *name, const char *msg, int code)
             "\tretry: false returned 1, backing off for 64 seconds and trying again...\n"
             "\tretry: false returned 1, backing off for 64 seconds and trying again...\n"
             "\t^C\n"
+            "\n"
+            "  In this example, we try three times before giving up.\n"
+            "\n"
+    		"\t~$ retry --times=3 -- false\n"
+            "\tretry: false returned 1, backing off for 10 seconds and trying again...\n"
+            "\tretry: false returned 1, backing off for 10 seconds and trying again...\n"
+            "\tretry: false returned 1, giving up.\n"
             "\n"
             "AUTHOR\n"
             "  Graham Leggett <minfrin@sharp.fm>\n"
@@ -594,6 +601,14 @@ int main (int argc, char **argv)
                 /* reset stdout for a go-around */
                 free(pumps[STDOUT_FD].base);
                 memset(&pumps[STDOUT_FD], 0, sizeof(pump_t));
+
+                /* last try? give up */
+                if (times == 1) {
+                    fprintf(stderr,
+                            "%s: %s returned %d, giving up.\n",
+                            name, message ? message : argv[optind], status);
+                    break;
+                }
 
                 if (delay[0]) {
                     d = strtol(delay, &delay, 10);

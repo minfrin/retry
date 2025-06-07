@@ -1,6 +1,9 @@
 
 Changes with v1.0.6
 
+  *) Avoid the final delay when running a command a
+     specific number of times. [Graham Leggett]
+
   *) Generate the man page during the dist hook, and not
      at build time. This makes life easy for parallel and
      cross compiled builds. [Graham Leggett]
