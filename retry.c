@@ -67,11 +67,11 @@ typedef struct pump_t {
     off_t offset;
     int rfd;
     int wfd;
-    int read_closed:1;
-    int write_closed:1;
-    int exit_on_close:1;
-    int no_close:1;
-    int send_eof:1;
+    unsigned int read_closed:1;
+    unsigned int write_closed:1;
+    unsigned int exit_on_close:1;
+    unsigned int no_close:1;
+    unsigned int send_eof:1;
 } pump_t;
 
 static int help(const char *name, const char *msg, int code)
