@@ -4,7 +4,7 @@ Name:      @PACKAGE_NAME@
 Version:   @PACKAGE_VERSION@
 Release:   1%{?dist}
 Summary:   Repeat a command until success
-License:   ASL 2.0
+License:   Apache-2.0
 
 URL:       https://github.com/minfrin/%{name}
 Source0:   %{URL}/releases/download/%{name}-%{version}/%{name}-%{version}.tar.gz
@@ -45,6 +45,10 @@ is passed to stdout once and once only.
 %license COPYING
 
 %changelog
+* Sun Jun 15 2025 Graham Leggett <minfrin@sharp.fm> - 1.0.6-1
+- Add optional jitter to the delay.
+- Avoid the final delay when running a command a specific number of times.
+- Generate the man page during the dist hook, and not at build time.
 * Wed Jan 04 2023 Graham Leggett <minfrin@sharp.fm> - 1.0.5-1
 - Allow multiple comma separated delay values.
 - End getopt parsing on first non-option argument.
