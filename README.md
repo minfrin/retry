@@ -19,7 +19,8 @@ dnf copr enable minfrin/retry
 dnf install retry
 ```
 
-The retry tool is available by default on Debian derived systems.
+The retry tool is available by default on Debian derived systems, Fedora
+systems, and EPEL.
 
 # example
 ```
