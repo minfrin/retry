@@ -56,6 +56,7 @@ static struct option long_options[] =
     {"until", required_argument, NULL, 'u'},
     {"while", required_argument, NULL, 'w'},
     {"times", required_argument, NULL, 't'},
+    {"quiet", no_argument, NULL, 'q'},
     {"help", no_argument, NULL, 'h'},
     {"version", no_argument, NULL, 'v'},
     {NULL, 0, NULL, 0}
@@ -124,7 +125,9 @@ static int help(const char *name, const char *msg, int code)
             "\n"
             "  -m message, --message=message  A message to include in the notification\n"
             "    when repeat has backed off. Defaults to the\n"
-            "    command name.\n"
+            "    command name. Incompatible with --quiet.\n"
+            "\n"
+            "  -q, --quiet  Do not comment on the exit status of the command.\n"
             "\n"
             "  -t times, --times=times  Total number of times to try\n"
             "    the command. By default we try forever.\n"
@@ -451,12 +454,12 @@ int main (int argc, char **argv)
     char *delay = DEFAULT_DELAY;
     struct timespec ts;
     pump_t pumps[PUMPS] = { 0 };
-    int c, status = 0, i;
+    int c, status = 0, i, quiet=0;
     long int d = 0;
     long int j = 0;
     long int times = DEFAULT_TIMES;
 
-    while ((c = getopt_long(argc, argv, "+d:j:m:t:u:w:hv", long_options, NULL)) != -1) {
+    while ((c = getopt_long(argc, argv, "+d:j:m:t:u:w:qhv", long_options, NULL)) != -1) {
 
         switch (c)
         {
@@ -514,6 +517,10 @@ int main (int argc, char **argv)
             repeat_while = optarg;
 
             break;
+        case 'q':
+            quiet = 1;
+
+            break;
         case 'h':
             return help(name, NULL, 0);
 
@@ -525,6 +532,11 @@ int main (int argc, char **argv)
 
         }
 
+    }
+
+    if (quiet && message) {
+        fprintf(stderr, "%s: Options --quiet and --message are incompatible!\n", name);
+        return EXIT_FAILURE;
     }
 
     if (optind == argc) {
@@ -655,9 +667,11 @@ int main (int argc, char **argv)
 
                 /* last try? give up */
                 if (times == 1) {
-                    fprintf(stderr,
-                            "%s: %s returned %d, giving up.\n",
-                            name, message ? message : argv[optind], status);
+                    if (!quiet) {
+                        fprintf(stderr,
+                                "%s: %s returned %d, giving up.\n",
+                                name, message ? message : argv[optind], status);
+                    }
                     break;
                 }
 
@@ -676,17 +690,20 @@ int main (int argc, char **argv)
                 }
 
                 if (ts.tv_sec || ts.tv_nsec) {
-                    fprintf(stderr,
-                            "%s: %s returned %d, backing off for %ld second%s and trying again...\n",
-                            name, message ? message : argv[optind], status,
-                            (long)ts.tv_sec, ts.tv_sec != 1 ? "s" : "");
-
+                    if (!quiet) {
+                        fprintf(stderr,
+                                "%s: %s returned %d, backing off for %ld second%s and trying again...\n",
+                                name, message ? message : argv[optind], status,
+                                (long)ts.tv_sec, ts.tv_sec != 1 ? "s" : "");
+                    }
                     nanosleep(&ts, NULL);
                 }
                 else {
-                    fprintf(stderr,
-                            "%s: %s returned %d, trying again...\n",
-                            name, message ? message : argv[optind], status);
+                    if (!quiet) {
+                        fprintf(stderr,
+                                "%s: %s returned %d, trying again...\n",
+                                name, message ? message : argv[optind], status);
+                    }
                 }
 
                 if (times > 0) {
